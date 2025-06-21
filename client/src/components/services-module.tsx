@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, FileText, Calendar, UserRoundCheck, TrendingUp, Mail, Receipt, Play, X, Eye, Download, Copy } from "lucide-react";
+import { Settings, FileText, Calendar, UserRoundCheck, TrendingUp, Mail, Receipt, Play, X, Eye, Download, Copy, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
