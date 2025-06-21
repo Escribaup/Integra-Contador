@@ -325,6 +325,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Service endpoints
+  app.get("/api/services", async (req, res) => {
+    try {
+      const { getServicesByCategory, getEnabledServices } = await import('./serpro-services.js');
+      const categories = getServicesByCategory();
+      const enabled = getEnabledServices();
+      
+      const totalServices = Object.keys(categories).reduce((total, cat) => 
+        total + Object.keys(categories[cat]).reduce((subTotal, subcat) => 
+          subTotal + categories[cat][subcat].length, 0), 0);
+      
+      res.json({
+        categories,
+        enabled,
+        totalServices
+      });
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      res.status(500).json({ message: "Erro ao buscar serviços" });
+    }
+  });
+
+  app.put("/api/services/:serviceName/toggle", async (req, res) => {
+    try {
+      const { serviceName } = req.params;
+      const { enabled } = req.body;
+      const { enableService, disableService, getServiceConfig } = await import('./serpro-services.js');
+      
+      const result = enabled ? enableService(serviceName) : disableService(serviceName);
+      
+      if (result) {
+        const service = getServiceConfig(serviceName);
+        res.json({ 
+          message: `Serviço ${enabled ? 'habilitado' : 'desabilitado'} com sucesso`,
+          service: { ...service, serviceName, enabled }
+        });
+      } else {
+        res.status(404).json({ message: "Serviço não encontrado" });
+      }
+    } catch (error) {
+      console.error('Error toggling service:', error);
+      res.status(500).json({ message: "Erro ao alterar status do serviço" });
+    }
+  });
+
   app.get("/api/services/requests", async (req, res) => {
     try {
       const requests = await storage.getServiceRequests();

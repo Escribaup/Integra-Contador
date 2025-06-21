@@ -77,15 +77,11 @@ export default function ServicesModule() {
 
   const executeServiceMutation = useMutation({
     mutationFn: async (data: { serviceName: string; parameters: Record<string, string> }) => {
-      const response = await fetch('/api/services/execute', {
+      return apiRequest('/api/services/execute', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' }
       });
-      if (!response.ok) {
-        throw new Error('Falha na execução do serviço');
-      }
-      return response.json();
     },
     onSuccess: (data) => {
       setApiResponse(data);

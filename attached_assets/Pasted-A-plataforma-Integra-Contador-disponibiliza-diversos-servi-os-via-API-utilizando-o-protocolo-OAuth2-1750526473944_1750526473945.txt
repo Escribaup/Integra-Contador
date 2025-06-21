@@ -1,0 +1,140 @@
+A plataforma Integra Contador disponibiliza diversos serviços via API, utilizando o protocolo OAuth2 para autenticação e autorização. Para consumir as APIs, é necessário obter um Consumer Key e um Consumer Secret na Área do Cliente Serpro, que identificam seu usuário e contrato. Além disso, é preciso solicitar um Bearer Token e um JWT Token, que são temporários e exigem um certificado digital e-CNPJ padrão ICP-Brasil, o mesmo utilizado na contratação do produto.
+
+O catálogo de serviços do Integra Contador funciona como um "roadmap" de todos os serviços do produto, indicando sua situação e data de implantação. As colunas `idSistema` e `idServico` são utilizadas no pedido de dados.
+
+Abaixo estão os serviços disponíveis na API do Integra Contador que possuem uma data de implantação no catálogo, indicando que estão em produção ou com implantação prevista, conforme o site do Integra Contador:
+
+*   **Integra-SN**
+    *   **PGDASD**
+        *   `TRANSDECLARACAO11` (23/09/2022): Entregar declaração mensal.
+        *   `GERARDAS12` (23/09/2022): Gerar DAS.
+        *   `CONSDECLARACAO13` (23/09/2022): Consultar Declarações transmitidas.
+        *   `CONSULTIMADECREC14` (23/09/2022): Consultar a Última Declaração/Recibo transmitida.
+        *   `CONSDECREC15` (23/09/2022): Consultar Declaração/Recibo.
+        *   `CONSEXTRATO16` (23/09/2022): Consultar Extrato do DAS. Um exemplo de requisição para este serviço foi fornecido, mostrando como consultar o extrato do DAS.
+        *   `GERARDASCOBRANCA17` (27/11/2024): Gerar um DAS referente a um período no sistema de Cobrança da RFB.
+        *   `GERARDASPROCESSO18` (27/11/2024): Gerar um DAS referente a um processo no sistema de Cobrança da RFB.
+        *   `GERARDASAVULSO19` (27/11/2024): Gerar um DAS Avulso para declarações transmitidas no período de apuração.
+    *   **REGIMEAPURACAO**
+        *   `EFETUAROPCAOREGIME101` (24/07/2023): Efetuar a opção pelo Regime de Apuração de Receitas.
+        *   `CONSULTARANOSCALENDARIOS102` (24/07/2023): Consultar todas as opções de Regime de Apuração de Receitas.
+        *   `CONSULTAROPCAOREGIME103` (24/07/2023): Consultar a opção pelo Regime de Apuração de Receitas.
+        *   `CONSULTARRESOLUCAO104` (24/07/2023): Consultar a resolução para o Regime de Caixa.
+    *   **DEFIS**
+        *   `TRANSDECLARACAO141` (25/09/2023): Transmissão da declaração das informações socioeconômicas e fiscais (DEFIS).
+        *   `CONSDECLARACAO142` (25/09/2023): Consulta que devolve uma lista com todos os números de declarações DEFIS transmitidas à base da RFB, para um contribuinte.
+        *   `CONSULTIMADECREC143` (25/09/2023): Consulta uma cópia do pdf do recibo de entrega e declaração referentes à última declaração transmitida à RFB em um determinado ano-calendário.
+        *   `CONSDECREC144` (25/09/2023): Consulta o pdf de uma declaração específica e seu recibo de entrega.
+
+*   **Integra-MEI**
+    *   **PGMEI**
+        *   `GERARDASPDF21` (23/09/2022): Gerar DAS em PDF. Este serviço é utilizado em um fluxo de aplicativo n8n para emissão de DAS.
+        *   `GERARDASCODBARRA22` (23/09/2022): Gerar DAS em código de barras.
+        *   `ATUBENEFICIO23` (23/09/2022): Atualizar Benefício.
+        *   `DIVIDAATIVA24` (23/09/2022): Consultar Dívida Ativa.
+    *   **CCMEI**
+        *   `EMITIRCCMEI121` (01/10/2024): Emissão do Certificado de Condição de MEI em formato PDF.
+        *   `DADOSCCMEI122` (01/10/2024): Consulta os dados do Certificado de Condição MEI.
+        *   `CCMEISITCADASTRAL123` (01/10/2024): Consulta a situação cadastral dos CNPJ MEI vinculados ao CPF.
+
+*   **Integra-DCTFWeb**
+    *   **DCTFWEB**
+        *   `GERARGUIA31` (23/09/2022): Gerar Guia Declaração.
+        *   `CONSRECIBO32` (23/09/2022): Consultar o Recibo da Declaração.
+        *   `CONSDECCOMPLETA33` (23/09/2022): Consultar Declaração Completa.
+        *   `CONSXMLDECLARACAO38` (23/09/2022): Consultar o XML da declaração.
+        *   `TRANSDECLARACAO310` (23/09/2022): Transmitir Declaração.
+        *   `GERARGUIAANDAMENTO313` (28/03/2025): Gerar Documento de Arrecadação para Declaração em Andamento.
+    *   **MIT**
+        *   `ENCAPURACAO314` (28/03/2025): Encerrar Apuração MIT.
+        *   `SITUACAOENC315` (28/03/2025): Consultar Situação Encerramento MIT.
+        *   `CONSAPURACAO316` (28/03/2025): Consultar Apuração MIT.
+        *   `LISTAAPURACOES317` (28/03/2025): Consultar Apurações MIT por ano ou mês.
+
+*   **Integra-Procurações**
+    *   **PROCURACOES**
+        *   `OBTERPROCURACAO41` (23/09/2022): Obter Procuração.
+
+*   **Integra-Sicalc**
+    *   **SICALC**
+        *   `CONSOLIDARGERARDARF51` (23/09/2022): Consolidar e Emitir um DARF em documento PDF.
+        *   `CONSULTAAPOIORECEITAS52` (23/09/2022): Apoio de consulta Receitas do Sicalc.
+        *   `GERARDARFCODBARRA53` (04/12/2023): Consolidar e Emitir um DARF em código de barras.
+
+*   **Integra-CaixaPostal**
+    *   **CAIXAPOSTAL**
+        *   `MSGCONTRIBUINTE61` (23/09/2022): Consulta de Mensagens por Contribuinte.
+        *   `MSGDETALHAMENTO62` (23/09/2022): Obter detalhes de uma mensagem específica.
+        *   `INNOVAMSG63` (23/09/2022): Obter Indicador de novas mensagens.
+    *   **DTE**
+        *   `CONSULTASITUACAODTE111` (01/09/2023): Consulta a situação do contribuinte quanto à adesão ao Caixa Postal do Simples Nacional e eCAC.
+
+*   **Integra-Pagamento**
+    *   **PAGTOWEB**
+        *   `PAGAMENTOS71` (23/09/2022): Consulta Pagamentos.
+        *   `COMPARRECADACAO72` (23/09/2022): Emitir Comprovante de Arrecadação.
+        *   `CONTACONSDOCARRPG73` (23/09/2022): Contar Consulta Documento de Arrecadação Pago.
+
+*   **Integra-Contador-Gerenciador**
+    *   **AUTENTICAPROCURADOR**
+        *   `ENVIOXMLASSINADO81` (23/09/2022): Envio de XML assinado digitalmente pelo procurador para receber um TOKEN de autorização do Procurador.
+    *   **EVENTOSATUALIZACAO**
+        *   `SOLICEVENTOSPF131` (01/04/2024): Solicita de forma assíncrona os últimos eventos de atualização em lote de Pessoa Física.
+        *   `SOLICEVENTOSPJ132` (01/04/2024): Solicita de forma assíncrona os últimos eventos de atualização em lote de Pessoa Jurídica.
+        *   `OBTEREVENTOSPF133` (01/04/2024): Consulta para obter os últimos eventos de atualização de Pessoa Física de forma assíncrona solicitado em lote.
+        *   `OBTEREVENTOSPJ134` (01/04/2024): Consulta para obter os últimos eventos de atualização de Pessoa Jurídica de forma assíncrona solicitado em lote.
+
+*   **Integra-SITFIS**
+    *   **SITFIS**
+        *   `SOLICITARPROTOCOLO91` (01/09/2023): Solicitação de geração de protocolo para baixar o relatório de Situação Fiscal de forma assíncrona.
+        *   `RELATORIOSITFIS92` (01/09/2023): Emissão de Relatório de Situação Fiscal.
+
+*   **Integra-Parcelamentos**
+    *   **PARCSN**
+        *   `GERARDAS161` (11/11/2024): Emitir documento de arrecadação.
+        *   `PARCELASPARAGERAR162` (11/11/2024): Consultar parcelas disponíveis para impressão (geração do DAS).
+        *   `PEDIDOSPARC163` (11/11/2024): Consultar todos os pedidos de parcelamentos existentes na modalidade PARCSN ordinário.
+        *   `OBTERPARC164` (11/11/2024): Consultar um parcelamento específico.
+        *   `DETPAGTOPARC165` (11/11/2024): Consultar detalhe de pagamento de DAS de parcelamento ordinário.
+    *   **PARCSN-ESP**
+        *   `GERARDAS171` (11/11/2024): Emitir documento de arrecadação na modalidade especial.
+        *   `PARCELASPARAGERAR172` (11/11/2024): Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento especial.
+        *   `PEDIDOSPARC173` (11/11/2024): Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento especial.
+        *   `OBTERPARC174` (11/11/2024): Consultar um parcelamento específico na modalidade especial.
+        *   `DETPAGTOPARC175` (11/11/2024): Consultar detalhe de pagamento de DAS de parcelamento especial.
+    *   **PERTSN**
+        *   `GERARDAS181` (11/11/2024): Emitir documento de arrecadação na modalidade PERTSN.
+        *   `PARCELASPARAGERAR182` (11/11/2024): Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento PERTSN.
+        *   `PEDIDOSPARC183` (11/11/2024): Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento PERTSN.
+        *   `OBTERPARC184` (11/11/2024): Consultar um parcelamento específico na modalidade PERTSN.
+        *   `DETPAGTOPARC185` (11/11/2024): Consultar detalhe de pagamento de DAS de parcelamento PERTSN.
+    *   **RELPSN**
+        *   `GERARDAS191` (11/11/2024): Emitir documento de arrecadação na modalidade RELPSN.
+        *   `PARCELASPARAGERAR192` (11/11/2024): Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento RELPSN.
+        *   `PEDIDOSPARC193` (11/11/2024): Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento RELPSN.
+        *   `OBTERPARC194` (11/11/2024): Consultar um parcelamento específico na modalidade RELPSN.
+        *   `DETPAGTOPARC195` (11/11/2024): Consultar detalhe de pagamento de DAS de parcelamento RELPSN.
+    *   **PARCMEI**
+        *   `GERARDAS201` (11/11/2024): Emitir documento de arrecadação na modalidade PARCMEI convencional.
+        *   `PARCELASPARAGERAR202` (11/11/2024): Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade PARCMEI convencional.
+        *   `PEDIDOSPARC203` (11/11/2024): Consultar todos os pedidos de parcelamentos existentes na modalidade PARCMEI convencional.
+        *   `OBTERPARC204` (11/11/2024): Consultar um parcelamento específico na modalidade PARCMEI convencional.
+        *   `DETPAGTOPARC205` (11/11/2024): Consultar detalhe de pagamento de DAS de parcelamento PARCMEI convencional.
+    *   **PARCMEI-ESP**
+        *   `GERARDAS211` (11/11/2024): Emitir documento de arrecadação na modalidade PARCMEI especial.
+        *   `PARCELASPARAGERAR212` (11/11/2024): Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento PARCMEI especial.
+        *   `PEDIDOSPARC213` (11/11/2024): Consultar todos os pedidos de parcelamentos existentes na modalidade de PARCMEI especial.
+        *   `OBTERPARC214` (11/11/2024): Consultar um parcelamento específico na modalidade PARCMEI especial.
+        *   `DETPAGTOPARC215` (11/11/2024): Consultar detalhe de pagamento de DAS de PARCMEI especial.
+    *   **PERTMEI**
+        *   `GERARDAS221` (11/11/2024): Emitir documento de arrecadação na modalidade PERTMEI.
+        *   `PARCELASPARAGERAR222` (11/11/2024): Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento PERTMEI.
+        *   `PEDIDOSPARC223` (11/11/2024): Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento PERTMEI.
+        *   `OBTERPARC224` (11/11/2024): Consultar um parcelamento específico na modalidade PERTMEI.
+        *   `DETPAGTOPARC225` (11/11/2024): Consultar detalhe de pagamento de DAS de parcelamento PERTMEI.
+    *   **RELPMEI**
+        *   `GERARDAS231` (11/11/2024): Emitir documento de arrecadação na modalidade RELPMEI.
+        *   `PARCELASPARAGERAR232` (11/11/2024): Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento RELPMEI.
+        *   `PEDIDOSPARC233` (11/11/2024): Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento RELPMEI.
+        *   `OBTERPARC234` (11/11/2024): Consultar um parcelamento específico na modalidade RELPMEI.
+        *   `DETPAGTOPARC235` (11/11/2024): Consultar detalhe de pagamento de DAS de parcelamento RELPMEI.
