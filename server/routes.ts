@@ -256,12 +256,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const serviceRequest = await storage.saveServiceRequest(requestData);
 
+      // Generate a simple mock PDF for testing
+      // This creates a minimal valid PDF document
+      const mockPdfContent = `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 70 >>
+stream
+BT
+/F1 24 Tf
+50 700 Td
+(Documento DAS - Integra Contador) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000372 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+449
+%%EOF`;
+
+      // Convert to base64
+      const base64Pdf = Buffer.from(mockPdfContent).toString('base64');
+
       // In a real implementation, make the actual API call to SERPRO
-      // For now, simulate a successful response
+      // For now, simulate a successful response with valid PDF
       const responseData = {
         codigo: "00",
         mensagem: "Processamento realizado com sucesso",
-        documento: `JVBERi0xLjMNCiXi48/TDQoxIDAgb2JqDQo8PA0KL1R5cGUgL0NhdGFsb2cNCi9PdXRsaW5lcyAyIDAgUg0KL1BhZ2VzIDMgMCBSDQo+Pg0KZW5kb2JqDQoyIDAgb2JqDQo8PA0KL1R5cGUgL091dGxpbmVzDQovQ291bnQgMA0KPj4NCmVuZG9iag0KMyAwIG9iag0KPDwNCi9UeXBlIC9QYWdlcw0KL0NvdW50IDENCi9LaWRzIFs0IDAgUl0NCj4+DQplbmRvYmoNCjQgMCBvYmoNCjw8DQovVHlwZSAvUGFnZQ0KL1BhcmVudCAzIDAgUg0KL01lZGlhQm94IFswIDAgNjEyIDc5Ml0NCi9Db250ZW50cyA1IDAgUg0KPj4NCmVuZG9iag0K...`,
+        documento: base64Pdf,
         timestamp: new Date().toISOString(),
       };
 
