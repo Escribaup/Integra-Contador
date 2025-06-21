@@ -110,6 +110,7 @@ export class MemStorage implements IStorage {
     const authToken: AuthTokens = { 
       ...tokens, 
       id, 
+      tokenType: tokens.tokenType || "Bearer",
       createdAt: new Date() 
     };
     this.authTokens.set(id, authToken);
@@ -121,6 +122,8 @@ export class MemStorage implements IStorage {
     const serviceRequest: ServiceRequest = { 
       ...request, 
       id, 
+      responseData: request.responseData || null,
+      errorMessage: request.errorMessage || null,
       createdAt: new Date() 
     };
     this.serviceRequests.set(id, serviceRequest);

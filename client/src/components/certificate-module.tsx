@@ -103,11 +103,13 @@ export default function CertificateModule() {
           <Alert className="mb-6">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              <p className="font-medium mb-1">Formatos Aceitos:</p>
-              <p>
-                Toda requisição de autenticação na loja do Serpro deverá ser informado o arquivo do 
-                certificado digital do tipo <strong>.p12 ou .pfx</strong> acompanhado da senha do certificado.
-              </p>
+              <p className="font-medium mb-1">Requisitos do Certificado:</p>
+              <ul className="text-sm space-y-1">
+                <li>• Arquivo do certificado digital do tipo <strong>.p12 ou .pfx</strong></li>
+                <li>• Senha do certificado (mínimo 6 caracteres)</li>
+                <li>• Certificado digital e-CNPJ válido (padrão ICP-Brasil)</li>
+                <li>• O sistema validará a senha antes do processamento</li>
+              </ul>
             </AlertDescription>
           </Alert>
 

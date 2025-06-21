@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertCredentialsSchema, insertCertificateSchema, insertAuthTokensSchema, insertServiceRequestSchema } from "@shared/schema";
 import multer from "multer";
 import crypto from "crypto";
+import forge from "node-forge";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -71,16 +72,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const saved = await storage.saveCertificate(certificateData);
       
-      // Store the actual certificate data (in a real app, you'd process the certificate here)
-      const base64Data = req.file.buffer.toString('base64');
-      await storage.updateCertificate(saved.id, {
-        certificateData: base64Data,
-        isProcessed: true,
-        // In a real implementation, you would parse the certificate to extract:
-        // cnpj, companyName, expirationDate, privateKey, publicCert
-      });
+      // Real certificate validation and processing using node-forge
+      try {
+        const base64Data = req.file.buffer.toString('base64');
+        
+        // Convert buffer to binary string for node-forge
+        const p12Der = forge.util.encode64(req.file.buffer.toString('binary'));
+        const p12Asn1 = forge.asn1.fromDer(forge.util.decode64(p12Der));
+        
+        try {
+          // Attempt to decrypt the PKCS#12 file with the provided password
+          const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+          
+          // Extract certificate bags
+          const certBags = p12.getBags({bagType: forge.pki.oids.certBag});
+          const keyBags = p12.getBags({bagType: forge.pki.oids.pkcs8ShroudedKeyBag});
+          
+          if (!certBags || !keyBags || Object.keys(certBags).length === 0) {
+            throw new Error("Certificado não contém as informações necessárias");
+          }
+          
+          // Get the certificate
+          const certBag = certBags[forge.pki.oids.certBag][0];
+          const certificate = certBag.cert;
+          
+          if (!certificate) {
+            throw new Error("Não foi possível extrair o certificado");
+          }
+          
+          // Extract information from certificate
+          let cnpj = "";
+          let companyName = "";
+          
+          // Look for CNPJ in subject or extensions
+          const subject = certificate.subject;
+          const subjectAltName = certificate.getExtension('subjectAltName');
+          
+          // Extract company name from subject CN (Common Name)
+          for (const attr of subject.attributes) {
+            if (attr.name === 'commonName') {
+              companyName = attr.value;
+              break;
+            }
+          }
+          
+          // Try to extract CNPJ from subject or extensions
+          for (const attr of subject.attributes) {
+            if (attr.name === 'serialNumber' || attr.shortName === 'serialNumber') {
+              const serial = attr.value;
+              // CNPJ pattern: 14 digits
+              const cnpjMatch = serial.match(/\d{14}/);
+              if (cnpjMatch) {
+                cnpj = cnpjMatch[0];
+                break;
+              }
+            }
+          }
+          
+          // Get expiration date
+          const expirationDate = certificate.validity.notAfter;
+          
+          // Convert private key to PEM format
+          const keyBag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag][0];
+          const privateKey = keyBag.key;
+          const privateKeyPem = forge.pki.privateKeyToPem(privateKey);
+          
+          // Convert certificate to PEM format
+          const certificatePem = forge.pki.certificateToPem(certificate);
+          
+          const certData = {
+            certificateData: base64Data,
+            isProcessed: true,
+            cnpj: cnpj || "Não encontrado",
+            companyName: companyName || "Não encontrado",
+            expirationDate: expirationDate,
+            privateKey: privateKeyPem,
+            publicCert: certificatePem,
+          };
 
-      res.json(saved);
+          await storage.updateCertificate(saved.id, certData);
+          
+          // Return the updated certificate
+          const updatedCert = await storage.getCertificate();
+          res.json(updatedCert);
+          
+        } catch (p12Error) {
+          // PKCS#12 decryption failed - likely wrong password
+          throw new Error("Senha do certificado incorreta ou arquivo corrompido");
+        }
+        
+      } catch (certError) {
+        // Certificate processing failed - update with error status
+        await storage.updateCertificate(saved.id, {
+          isProcessed: false,
+        });
+        
+        const errorMessage = certError instanceof Error ? certError.message : 
+          "Falha na validação do certificado. Verifique se a senha está correta e se o arquivo é um certificado digital válido (.p12 ou .pfx).";
+        
+        return res.status(400).json({ 
+          message: errorMessage 
+        });
+      }
+
     } catch (error) {
       res.status(500).json({ message: "Failed to upload certificate" });
     }
