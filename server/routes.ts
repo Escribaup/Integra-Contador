@@ -6,6 +6,11 @@ import multer from "multer";
 import crypto from "crypto";
 import forge from "node-forge";
 import https from "https";
+import { promisify } from "util";
+import fs from "fs";
+import path from "path";
+import os from "os";
+import { getServiceConfig, buildServiceRequest } from "./serpro-services";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -220,30 +225,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       try {
-        // Create HTTPS agent with client certificate for mutual TLS
-        let httpsAgent;
-        if (certificate.privateKey && certificate.publicCert) {
-          httpsAgent = new https.Agent({
-            cert: certificate.publicCert,
-            key: certificate.privateKey,
-            passphrase: certificate.password
-          });
-        }
-
-        const authResponse = await fetch('https://autenticacao.sapi.serpro.gov.br/authenticate', {
+        // Use native Node.js HTTPS for certificate-based authentication
+        // fetch() doesn't properly support client certificates in Node.js
+        const requestOptions: https.RequestOptions = {
+          hostname: 'autenticacao.sapi.serpro.gov.br',
+          port: 443,
+          path: '/authenticate',
           method: 'POST',
-          headers: authHeaders,
-          body: 'grant_type=client_credentials',
-          // @ts-ignore - Node.js specific agent property
-          agent: httpsAgent
+          headers: authHeaders
+        };
+
+        // Write certificate and key to temporary files (like Python approach)
+        if (certificate.publicCert && certificate.privateKey) {
+          const tempDir = os.tmpdir();
+          const certPath = path.join(tempDir, `cert_${Date.now()}.pem`);
+          const keyPath = path.join(tempDir, `key_${Date.now()}.key`);
+          
+          try {
+            // Write certificate and key to temporary files
+            fs.writeFileSync(certPath, certificate.publicCert.trim());
+            fs.writeFileSync(keyPath, certificate.privateKey.trim());
+            
+            // Use file paths like Python requests
+            requestOptions.cert = fs.readFileSync(certPath);
+            requestOptions.key = fs.readFileSync(keyPath);
+            requestOptions.rejectUnauthorized = false;
+            
+            console.log('Using certificate files:', { certPath, keyPath });
+            
+            // Clean up files after request
+            const cleanup = () => {
+              try {
+                fs.unlinkSync(certPath);
+                fs.unlinkSync(keyPath);
+              } catch (e) {
+                console.warn('Failed to cleanup certificate files:', e);
+              }
+            };
+            
+            // Set cleanup to run after the request
+            setTimeout(cleanup, 10000); // Cleanup after 10 seconds
+            
+          } catch (fileError) {
+            throw new Error(`Erro ao processar certificado: ${fileError}`);
+          }
+        } else {
+          throw new Error("Certificado digital não está configurado corretamente");
+        }
+        
+        const authResponse = await new Promise<any>((resolve, reject) => {
+          const req = https.request(requestOptions, (res) => {
+            let data = '';
+            res.on('data', (chunk) => {
+              data += chunk;
+            });
+            res.on('end', () => {
+              if (res.statusCode === 200) {
+                try {
+                  resolve(JSON.parse(data));
+                } catch (e) {
+                  reject(new Error(`Invalid JSON response: ${data}`));
+                }
+              } else {
+                reject(new Error(`Authentication failed: ${res.statusCode} - ${data}`));
+              }
+            });
+          });
+
+          req.on('error', (error) => {
+            reject(error);
+          });
+
+          req.write('grant_type=client_credentials');
+          req.end();
         });
 
-        if (!authResponse.ok) {
-          const errorText = await authResponse.text();
-          throw new Error(`Authentication failed: ${authResponse.status} - ${errorText}`);
-        }
-
-        const authData = await authResponse.json();
+        const authData = authResponse;
         
         const tokenData = {
           accessToken: authData.access_token,
@@ -298,21 +355,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const serviceRequest = await storage.saveServiceRequest(requestData);
 
-      // Prepare the request body for SERPRO API
-      const apiRequestBody = {
-        contratante: parameters.contratante,
-        autorPedidoDados: parameters.autorPedidoDados,
-        contribuinte: {
-          numero: parameters.contribuinte,
-          tipo: "CNPJ"
-        },
-        idSistema: "INTEGRA-CONTADOR",
-        idServico: serviceName.toUpperCase(),
-        versaoSistema: "1.0",
-        dados: {
-          competencia: parameters.competencia
-        }
-      };
+      // Get service configuration and build request
+      const serviceConfig = getServiceConfig(serviceName);
+      if (!serviceConfig) {
+        return res.status(400).json({ 
+          message: `Serviço não suportado: ${serviceName}. Serviços disponíveis: consultar-das, gerar-das, consultar-situacao` 
+        });
+      }
+
+      const apiRequestBody = buildServiceRequest(
+        serviceName,
+        parameters,
+        parameters.contratante,
+        parameters.autorPedidoDados,
+        parameters.contribuinte
+      );
 
       // Real API call to SERPRO Integra Contador
       const serviceHeaders = {
@@ -323,23 +380,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       try {
-        // Use the same HTTPS agent with certificate for service calls
+        // Use the same HTTPS approach with certificate for service calls
         const certificate = await storage.getCertificate();
-        let httpsAgent;
-        if (certificate?.privateKey && certificate.publicCert) {
-          httpsAgent = new https.Agent({
-            cert: certificate.publicCert,
-            key: certificate.privateKey,
-            passphrase: certificate.password
-          });
+        
+        const serviceRequestOptions: https.RequestOptions = {
+          hostname: 'gateway.apiserpro.serpro.gov.br',
+          port: 443,
+          path: serviceConfig.endpoint,
+          method: 'POST',
+          headers: serviceHeaders
+        };
+
+        // Write certificate and key to temporary files for service calls
+        if (certificate?.publicCert && certificate.privateKey) {
+          const tempDir = os.tmpdir();
+          const certPath = path.join(tempDir, `service_cert_${Date.now()}.pem`);
+          const keyPath = path.join(tempDir, `service_key_${Date.now()}.key`);
+          
+          try {
+            // Write certificate and key to temporary files
+            fs.writeFileSync(certPath, certificate.publicCert.trim());
+            fs.writeFileSync(keyPath, certificate.privateKey.trim());
+            
+            // Use file buffers like Python requests
+            serviceRequestOptions.cert = fs.readFileSync(certPath);
+            serviceRequestOptions.key = fs.readFileSync(keyPath);
+            serviceRequestOptions.rejectUnauthorized = false;
+            
+            // Clean up files after request
+            const cleanup = () => {
+              try {
+                fs.unlinkSync(certPath);
+                fs.unlinkSync(keyPath);
+              } catch (e) {
+                console.warn('Failed to cleanup service certificate files:', e);
+              }
+            };
+            
+            setTimeout(cleanup, 10000); // Cleanup after 10 seconds
+            
+          } catch (fileError) {
+            throw new Error(`Erro ao processar certificado para serviço: ${fileError}`);
+          }
+        } else {
+          throw new Error("Certificado digital não está configurado corretamente");
         }
 
-        const serviceResponse = await fetch(`https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/${serviceName}`, {
-          method: 'POST',
-          headers: serviceHeaders,
-          body: JSON.stringify(apiRequestBody),
-          // @ts-ignore - Node.js specific agent property
-          agent: httpsAgent
+        const serviceResponse = await new Promise<any>((resolve, reject) => {
+          const req = https.request(serviceRequestOptions, (res) => {
+            let data = '';
+            res.on('data', (chunk) => {
+              data += chunk;
+            });
+            res.on('end', () => {
+              if (res.statusCode === 200) {
+                try {
+                  resolve(JSON.parse(data));
+                } catch (e) {
+                  reject(new Error(`Invalid JSON response: ${data}`));
+                }
+              } else {
+                // For non-200 responses, try to parse as JSON to get SERPRO error details
+                try {
+                  const errorData = JSON.parse(data);
+                  if (errorData.mensagens && errorData.mensagens.length > 0) {
+                    // Return structured SERPRO error response
+                    resolve({
+                      status: res.statusCode,
+                      success: false,
+                      mensagens: errorData.mensagens,
+                      responseId: errorData.responseId,
+                      responseDateTime: errorData.responseDateTime
+                    });
+                  } else {
+                    reject(new Error(`Service call failed: ${res.statusCode} - ${data}`));
+                  }
+                } catch (e) {
+                  reject(new Error(`Service call failed: ${res.statusCode} - ${data}`));
+                }
+              }
+            });
+          });
+
+          req.on('error', (error) => {
+            reject(error);
+          });
+
+          req.write(JSON.stringify(apiRequestBody));
+          req.end();
         });
 
         if (!serviceResponse.ok) {
