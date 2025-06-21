@@ -72,11 +72,17 @@ export default function ServiceCatalog() {
   // Toggle service mutation
   const toggleServiceMutation = useMutation({
     mutationFn: async ({ serviceName, enabled }: { serviceName: string; enabled: boolean }) => {
-      return apiRequest(`/api/services/${serviceName}/toggle`, {
+      const response = await fetch(`/api/services/${serviceName}/toggle`, {
         method: 'PUT',
         body: JSON.stringify({ enabled }),
         headers: { 'Content-Type': 'application/json' }
       });
+      
+      if (!response.ok) {
+        throw new Error('Falha ao alterar status do serviço');
+      }
+      
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/services'] });
