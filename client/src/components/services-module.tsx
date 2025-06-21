@@ -78,6 +78,7 @@ export default function ServicesModule() {
   });
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const { toast } = useToast();
 
   const handleServiceSelect = (categoryId: string) => {
@@ -119,6 +120,71 @@ export default function ServicesModule() {
       title: "Copiado",
       description: "Resposta copiada para a área de transferência",
     });
+  };
+
+  const handleViewDocument = () => {
+    if (apiResponse?.documento) {
+      // Convert base64 to blob and create URL for PDF viewing
+      try {
+        const byteCharacters = atob(apiResponse.documento);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        // Open in new window
+        window.open(url, '_blank');
+        
+        toast({
+          title: "Documento aberto",
+          description: "O PDF foi aberto em uma nova aba",
+        });
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível abrir o documento",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDownloadDocument = () => {
+    if (apiResponse?.documento) {
+      try {
+        const byteCharacters = atob(apiResponse.documento);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `DAS_${selectedService}_${new Date().toISOString().slice(0, 7).replace('-', '')}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Download iniciado",
+          description: "O arquivo PDF está sendo baixado",
+        });
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível baixar o documento",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const getColorClasses = (color: string) => {
@@ -310,11 +376,11 @@ export default function ServicesModule() {
                           </div>
                         </div>
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={handleViewDocument}>
                             <Eye className="mr-1" size={14} />
                             Visualizar
                           </Button>
-                          <Button size="sm" className="bg-primary hover:bg-primary-600">
+                          <Button size="sm" className="bg-primary hover:bg-primary-600" onClick={handleDownloadDocument}>
                             <Download className="mr-1" size={14} />
                             Baixar
                           </Button>
