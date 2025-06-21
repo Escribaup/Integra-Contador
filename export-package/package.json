@@ -1,0 +1,52 @@
+{
+  "name": "serpro-integra-contador",
+  "version": "1.0.0",
+  "description": "SERPRO Integra Contador API integration package for Brazilian accounting firms",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx server/index.ts",
+    "build": "tsc",
+    "start": "node dist/server/index.js",
+    "db:push": "drizzle-kit push:pg",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.0",
+    "@hookform/resolvers": "^3.3.0",
+    "@tanstack/react-query": "^5.0.0",
+    "drizzle-orm": "^0.29.0",
+    "drizzle-zod": "^0.5.0",
+    "express": "^4.18.0",
+    "express-session": "^1.17.0",
+    "multer": "^1.4.0",
+    "node-forge": "^1.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.47.0",
+    "wouter": "^3.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.0",
+    "@types/express-session": "^1.17.0",
+    "@types/multer": "^1.4.0",
+    "@types/node": "^20.0.0",
+    "@types/node-forge": "^1.3.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "drizzle-kit": "^0.20.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.2.0"
+  },
+  "keywords": [
+    "serpro",
+    "integra-contador",
+    "brazilian-tax",
+    "mei",
+    "das",
+    "oauth2",
+    "digital-certificate"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
