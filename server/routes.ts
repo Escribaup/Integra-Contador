@@ -5,6 +5,7 @@ import { insertCredentialsSchema, insertCertificateSchema, insertAuthTokensSchem
 import multer from "multer";
 import crypto from "crypto";
 import forge from "node-forge";
+import https from "https";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -209,18 +210,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Certificate not configured" });
       }
 
-      // In a real implementation, make the actual OAuth2 request to SERPRO
-      // For now, simulate the response
-      const authData = {
-        accessToken: `bearer_${crypto.randomBytes(32).toString('hex')}`,
-        jwtToken: `jwt_${crypto.randomBytes(32).toString('hex')}`,
-        expiresIn: "3600", // 1 hour
-        expiresAt: new Date(Date.now() + 3600 * 1000),
+      // Real OAuth2 request to SERPRO
+      const auth = Buffer.from(`${credentials.consumerKey}:${credentials.consumerSecret}`).toString('base64');
+      
+      const authHeaders = {
+        'Authorization': `Basic ${auth}`,
+        'Role-Type': 'TERCEIROS',
+        'Content-Type': 'application/x-www-form-urlencoded',
       };
 
-      const saved = await storage.saveAuthTokens(authData);
-      res.json(saved);
+      try {
+        // Create HTTPS agent with client certificate for mutual TLS
+        let httpsAgent;
+        if (certificate.privateKey && certificate.publicCert) {
+          httpsAgent = new https.Agent({
+            cert: certificate.publicCert,
+            key: certificate.privateKey,
+            passphrase: certificate.password
+          });
+        }
+
+        const authResponse = await fetch('https://autenticacao.sapi.serpro.gov.br/authenticate', {
+          method: 'POST',
+          headers: authHeaders,
+          body: 'grant_type=client_credentials',
+          // @ts-ignore - Node.js specific agent property
+          agent: httpsAgent
+        });
+
+        if (!authResponse.ok) {
+          const errorText = await authResponse.text();
+          throw new Error(`Authentication failed: ${authResponse.status} - ${errorText}`);
+        }
+
+        const authData = await authResponse.json();
+        
+        const tokenData = {
+          accessToken: authData.access_token,
+          jwtToken: authData.jwt_token,
+          expiresIn: authData.expires_in.toString(),
+          tokenType: authData.token_type || "Bearer",
+          expiresAt: new Date(Date.now() + parseInt(authData.expires_in) * 1000),
+        };
+
+        const saved = await storage.saveAuthTokens(tokenData);
+        res.json(saved);
+      } catch (authError) {
+        console.error('SERPRO Authentication Error:', authError);
+        return res.status(401).json({ 
+          message: `Falha na autenticação com SERPRO: ${authError instanceof Error ? authError.message : 'Erro desconhecido'}` 
+        });
+      }
     } catch (error) {
+      console.error('Authentication Error:', error);
       res.status(500).json({ message: "Authentication failed" });
     }
   });
@@ -251,71 +293,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestData = {
         serviceName,
         requestData: JSON.stringify(parameters),
-        status: "pending",
+        status: "pending" as const,
       };
 
       const serviceRequest = await storage.saveServiceRequest(requestData);
 
-      // Generate a simple mock PDF for testing
-      // This creates a minimal valid PDF document
-      const mockPdfContent = `%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-endobj
-4 0 obj
-<< /Length 70 >>
-stream
-BT
-/F1 24 Tf
-50 700 Td
-(Documento DAS - Integra Contador) Tj
-ET
-endstream
-endobj
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-endobj
-xref
-0 6
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000251 00000 n 
-0000000372 00000 n 
-trailer
-<< /Size 6 /Root 1 0 R >>
-startxref
-449
-%%EOF`;
-
-      // Convert to base64
-      const base64Pdf = Buffer.from(mockPdfContent).toString('base64');
-
-      // In a real implementation, make the actual API call to SERPRO
-      // For now, simulate a successful response with valid PDF
-      const responseData = {
-        codigo: "00",
-        mensagem: "Processamento realizado com sucesso",
-        documento: base64Pdf,
-        timestamp: new Date().toISOString(),
+      // Prepare the request body for SERPRO API
+      const apiRequestBody = {
+        contratante: parameters.contratante,
+        autorPedidoDados: parameters.autorPedidoDados,
+        contribuinte: {
+          numero: parameters.contribuinte,
+          tipo: "CNPJ"
+        },
+        idSistema: "INTEGRA-CONTADOR",
+        idServico: serviceName.toUpperCase(),
+        versaoSistema: "1.0",
+        dados: {
+          competencia: parameters.competencia
+        }
       };
 
-      // Update the request with the response
-      await storage.saveServiceRequest({
-        ...requestData,
-        responseData: JSON.stringify(responseData),
-        status: "success",
-      });
+      // Real API call to SERPRO Integra Contador
+      const serviceHeaders = {
+        'Authorization': `Bearer ${tokens.accessToken}`,
+        'Content-Type': 'application/json',
+        'jwt_token': tokens.jwtToken,
+        'Accept': 'application/json'
+      };
 
-      res.json(responseData);
+      try {
+        // Use the same HTTPS agent with certificate for service calls
+        const certificate = await storage.getCertificate();
+        let httpsAgent;
+        if (certificate?.privateKey && certificate.publicCert) {
+          httpsAgent = new https.Agent({
+            cert: certificate.publicCert,
+            key: certificate.privateKey,
+            passphrase: certificate.password
+          });
+        }
+
+        const serviceResponse = await fetch(`https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/${serviceName}`, {
+          method: 'POST',
+          headers: serviceHeaders,
+          body: JSON.stringify(apiRequestBody),
+          // @ts-ignore - Node.js specific agent property
+          agent: httpsAgent
+        });
+
+        if (!serviceResponse.ok) {
+          const errorText = await serviceResponse.text();
+          throw new Error(`Service call failed: ${serviceResponse.status} - ${errorText}`);
+        }
+
+        const responseData = await serviceResponse.json();
+
+        // Update the request with the response
+        await storage.saveServiceRequest({
+          ...requestData,
+          responseData: JSON.stringify(responseData),
+          status: "success" as const,
+        });
+
+        res.json(responseData);
+
+      } catch (serviceError) {
+        console.error('SERPRO Service Error:', serviceError);
+        
+        // Update the request with error status
+        await storage.saveServiceRequest({
+          ...requestData,
+          status: "error" as const,
+          errorMessage: serviceError instanceof Error ? serviceError.message : 'Erro desconhecido',
+        });
+
+        return res.status(400).json({ 
+          message: `Falha na execução do serviço: ${serviceError instanceof Error ? serviceError.message : 'Erro desconhecido'}` 
+        });
+      }
+
     } catch (error) {
+      console.error('Service execution error:', error);
       res.status(500).json({ message: "Service execution failed" });
     }
   });

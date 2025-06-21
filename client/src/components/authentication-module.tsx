@@ -66,13 +66,13 @@ export default function AuthenticationModule() {
         <CardContent className="p-6">
           <Alert className="mb-6">
             <AlertDescription>
-              <p className="font-medium mb-1">Processo de Autenticação OAuth2:</p>
+              <p className="font-medium mb-1">Integração Real com SERPRO:</p>
               <p>
-                O sistema fará uma requisição POST para{" "}
+                O sistema conecta diretamente com a API oficial do SERPRO em{" "}
                 <code className="bg-muted px-1 rounded text-sm">
                   https://autenticacao.sapi.serpro.gov.br/authenticate
                 </code>{" "}
-                usando suas credenciais e certificado digital para obter o Bearer Token e JWT Token necessários.
+                usando suas credenciais válidas e certificado digital e-CNPJ para obter tokens de acesso reais.
               </p>
             </AlertDescription>
           </Alert>

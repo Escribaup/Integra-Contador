@@ -208,7 +208,7 @@ export default function ServicesModule() {
             <div>
               <h2 className="text-lg font-medium text-foreground">Serviços da API Integra Contador</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Selecione e execute serviços disponíveis na API
+                Conectado diretamente à API oficial do SERPRO
               </p>
             </div>
           </div>
