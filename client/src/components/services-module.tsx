@@ -123,10 +123,10 @@ export default function ServicesModule() {
   };
 
   const handleViewDocument = () => {
-    if (apiResponse?.documento) {
-      // Convert base64 to blob and create URL for PDF viewing
+    const pdfData = apiResponse?.pdf || apiResponse?.documento;
+    if (pdfData) {
       try {
-        const byteCharacters = atob(apiResponse.documento);
+        const byteCharacters = atob(pdfData);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -149,13 +149,20 @@ export default function ServicesModule() {
           variant: "destructive",
         });
       }
+    } else {
+      toast({
+        title: "Erro",
+        description: "Nenhum documento PDF encontrado na resposta",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDownloadDocument = () => {
-    if (apiResponse?.documento) {
+    const pdfData = apiResponse?.pdf || apiResponse?.documento;
+    if (pdfData) {
       try {
-        const byteCharacters = atob(apiResponse.documento);
+        const byteCharacters = atob(pdfData);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -167,7 +174,9 @@ export default function ServicesModule() {
         // Create download link
         const link = document.createElement('a');
         link.href = url;
-        link.download = `DAS_${selectedService}_${new Date().toISOString().slice(0, 7).replace('-', '')}.pdf`;
+        const competencia = serviceParameters.periodoApuracao || new Date().toISOString().slice(0, 7).replace('-', '');
+        const contribuinte = serviceParameters.contribuinte || 'CNPJ';
+        link.download = `DAS_MEI_${contribuinte}_${competencia}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -184,6 +193,12 @@ export default function ServicesModule() {
           variant: "destructive",
         });
       }
+    } else {
+      toast({
+        title: "Erro",
+        description: "Nenhum documento PDF encontrado na resposta",
+        variant: "destructive",
+      });
     }
   };
 

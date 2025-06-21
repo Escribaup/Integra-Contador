@@ -475,14 +475,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const responseData = serviceResponse;
 
-        // Update the request with the response
-        await storage.saveServiceRequest({
-          ...requestData,
-          responseData: JSON.stringify(responseData),
-          status: "success" as const,
-        });
+        // Handle MEI service responses with PDF extraction
+        if (serviceConfig.idSistema === 'PGMEI' && responseData.dados) {
+          try {
+            const dadosArray = JSON.parse(responseData.dados);
+            
+            if (Array.isArray(dadosArray) && dadosArray.length > 0) {
+              const dasInfo = dadosArray[0];
+              
+              // Extract PDF and other details
+              const processedResponse = {
+                ...responseData,
+                pdf: dasInfo.pdf,
+                cnpjCompleto: dasInfo.cnpjCompleto,
+                razaoSocial: dasInfo.razaoSocial,
+                detalhamento: dasInfo.detalhamento,
+                pdfGenerated: !!dasInfo.pdf,
+                dadosOriginais: dadosArray
+              };
+              
+              await storage.saveServiceRequest({
+                ...requestData,
+                responseData: JSON.stringify(processedResponse),
+                status: "success" as const,
+              });
 
-        res.json(responseData);
+              res.json(processedResponse);
+            } else {
+              await storage.saveServiceRequest({
+                ...requestData,
+                responseData: JSON.stringify(responseData),
+                status: "success" as const,
+              });
+
+              res.json(responseData);
+            }
+          } catch (parseError) {
+            console.error('Error parsing MEI response dados:', parseError);
+            await storage.saveServiceRequest({
+              ...requestData,
+              responseData: JSON.stringify(responseData),
+              status: "success" as const,
+            });
+
+            res.json(responseData);
+          }
+        } else {
+          // For non-MEI services, return as-is
+          await storage.saveServiceRequest({
+            ...requestData,
+            responseData: JSON.stringify(responseData),
+            status: "success" as const,
+          });
+
+          res.json(responseData);
+        }
 
       } catch (serviceError) {
         console.error('SERPRO Service Error:', serviceError);
