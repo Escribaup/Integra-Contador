@@ -2,7 +2,7 @@
 // Based on official SERPRO API documentation and catalog
 
 export interface SerproServiceConfig {
-  endpoint: string;
+  endpoint: '/integra-contador/v1/Apoiar' | '/integra-contador/v1/Consultar' | '/integra-contador/v1/Declarar' | '/integra-contador/v1/Emitir' | '/integra-contador/v1/Monitorar';
   idSistema: string;
   idServico: string;
   description: string;
@@ -13,74 +13,18 @@ export interface SerproServiceConfig {
   outputType: 'pdf' | 'json' | 'xml' | 'mixed';
   enabled: boolean;
   dateImplemented?: string;
+  apiType: 'Apoiar' | 'Consultar' | 'Declarar' | 'Emitir' | 'Monitorar';
+  versaoSistema?: string;
+  specificDataStructure?: Record<string, any>;
 }
 
 export const SERPRO_SERVICES: Record<string, SerproServiceConfig> = {
-  // Integra-MEI - PGMEI
-  "mei-gerar-das-pdf": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGMEI",
-    idServico: "GERARDASPDF21",
-    description: "Gerar DAS em PDF",
-    requiredParams: ["periodoApuracao"],
-    category: "Integra-MEI",
-    subcategory: "PGMEI",
-    outputType: "pdf",
-    enabled: true,
-    dateImplemented: "23/09/2022"
-  },
-  "mei-gerar-das-codbarra": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGMEI", 
-    idServico: "GERARDASCODBARRA22",
-    description: "Gerar DAS em código de barras",
-    requiredParams: ["periodoApuracao"],
-    category: "Integra-MEI",
-    subcategory: "PGMEI",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-  "mei-atualizar-beneficio": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGMEI",
-    idServico: "ATUBENEFICIO23",
-    description: "Atualizar Benefício",
-    requiredParams: [],
-    category: "Integra-MEI",
-    subcategory: "PGMEI", 
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-  "mei-consultar-divida-ativa": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGMEI",
-    idServico: "DIVIDAATIVA24",
-    description: "Consultar Dívida Ativa",
-    requiredParams: [],
-    category: "Integra-MEI",
-    subcategory: "PGMEI",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-
-  // Integra-MEI - CCMEI
-  "ccmei-emitir": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "CCMEI",
-    idServico: "EMITIRCCMEI121",
-    description: "Emissão do Certificado de Condição de MEI em formato PDF",
-    requiredParams: [],
-    category: "Integra-MEI",
-    subcategory: "CCMEI",
-    outputType: "pdf",
-    enabled: false,
-    dateImplemented: "01/10/2024"
-  },
+  // ===== APOIAR SERVICES =====
+  
+  // ===== CONSULTAR SERVICES =====
   "ccmei-consultar-dados": {
-    endpoint: "/integra-contador/v1/Emitir",
+    endpoint: "/integra-contador/v1/Consultar",
+    apiType: "Consultar",
     idSistema: "CCMEI",
     idServico: "DADOSCCMEI122",
     description: "Consulta os dados do Certificado de Condição MEI",
@@ -89,10 +33,12 @@ export const SERPRO_SERVICES: Record<string, SerproServiceConfig> = {
     subcategory: "CCMEI",
     outputType: "json",
     enabled: false,
-    dateImplemented: "01/10/2024"
+    dateImplemented: "01/10/2024",
+    versaoSistema: "1.0"
   },
   "ccmei-situacao-cadastral": {
-    endpoint: "/integra-contador/v1/Emitir",
+    endpoint: "/integra-contador/v1/Consultar",
+    apiType: "Consultar",
     idSistema: "CCMEI",
     idServico: "CCMEISITCADASTRAL123",
     description: "Consulta a situação cadastral dos CNPJ MEI vinculados ao CPF",
@@ -101,227 +47,309 @@ export const SERPRO_SERVICES: Record<string, SerproServiceConfig> = {
     subcategory: "CCMEI",
     outputType: "json",
     enabled: false,
-    dateImplemented: "01/10/2024"
+    dateImplemented: "01/10/2024",
+    versaoSistema: "1.0"
   },
-
-  // Integra-SN - PGDASD
-  "sn-transmitir-declaracao": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGDASD",
-    idServico: "TRANSDECLARACAO11",
-    description: "Entregar declaração mensal",
-    requiredParams: ["periodoApuracao"],
-    category: "Integra-SN",
-    subcategory: "PGDASD",
+  "mei-consultar-divida-ativa": {
+    endpoint: "/integra-contador/v1/Consultar",
+    apiType: "Consultar",
+    idSistema: "PGMEI",
+    idServico: "DIVIDAATIVA24",
+    description: "Consultar Dívida Ativa",
+    requiredParams: [],
+    category: "Integra-MEI",
+    subcategory: "PGMEI",
     outputType: "json",
     enabled: false,
-    dateImplemented: "23/09/2022"
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
   },
-  "sn-gerar-das": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGDASD",
-    idServico: "GERARDAS12",
-    description: "Gerar DAS",
-    requiredParams: ["periodoApuracao"],
-    category: "Integra-SN",
-    subcategory: "PGDASD",
-    outputType: "pdf",
+  "mei-consultar-parcelamento": {
+    endpoint: "/integra-contador/v1/Consultar",
+    apiType: "Consultar",
+    idSistema: "PGMEI",
+    idServico: "PARCELAMENTO25",
+    description: "Consultar Parcelamento",
+    requiredParams: [],
+    category: "Integra-MEI",
+    subcategory: "PGMEI",
+    outputType: "json",
     enabled: false,
-    dateImplemented: "23/09/2022"
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
   },
-  "sn-consultar-declaracoes": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGDASD",
-    idServico: "CONSDECLARACAO13",
-    description: "Consultar Declarações transmitidas",
+  "sn-consultar-regime-opcao": {
+    endpoint: "/integra-contador/v1/Consultar",
+    apiType: "Consultar",
+    idSistema: "SN",
+    idServico: "REGIMEOPCAO26",
+    description: "Consultar Regime e Opção pelo Simples Nacional",
+    requiredParams: ["exercicio"],
+    category: "Integra-SN",
+    subcategory: "SN",
+    outputType: "json",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "sn-consultar-pendencias": {
+    endpoint: "/integra-contador/v1/Consultar",
+    apiType: "Consultar",
+    idSistema: "SN",
+    idServico: "PENDENCIAS27",
+    description: "Consultar Pendências Simples Nacional",
     requiredParams: [],
     category: "Integra-SN",
-    subcategory: "PGDASD",
+    subcategory: "SN",
     outputType: "json",
     enabled: false,
-    dateImplemented: "23/09/2022"
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
   },
-  "sn-consultar-ultima-declaracao": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGDASD",
-    idServico: "CONSULTIMADECREC14",
-    description: "Consultar a Última Declaração/Recibo transmitida",
+  "sn-consultar-parcelamento": {
+    endpoint: "/integra-contador/v1/Consultar",
+    apiType: "Consultar",
+    idSistema: "SN",
+    idServico: "PARCELAMENTOSN28",
+    description: "Consultar Parcelamento Simples Nacional",
     requiredParams: [],
     category: "Integra-SN",
-    subcategory: "PGDASD",
+    subcategory: "SN",
     outputType: "json",
     enabled: false,
-    dateImplemented: "23/09/2022"
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
   },
-  "sn-consultar-declaracao-recibo": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGDASD",
-    idServico: "CONSDECREC15",
-    description: "Consultar Declaração/Recibo",
-    requiredParams: ["numeroDeclaracao"],
-    category: "Integra-SN",
-    subcategory: "PGDASD",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-  "sn-consultar-extrato-das": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PGDASD",
-    idServico: "CONSEXTRATO16",
-    description: "Consultar Extrato do DAS",
-    requiredParams: ["numeroDas"],
-    category: "Integra-SN",
-    subcategory: "PGDASD",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-
-  // Integra-SN - REGIMEAPURACAO
-  "sn-optar-regime": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "REGIMEAPURACAO",
-    idServico: "EFETUAROPCAOREGIME101",
-    description: "Efetuar a opção pelo Regime de Apuração de Receitas",
-    requiredParams: ["tipoRegime"],
-    category: "Integra-SN",
-    subcategory: "REGIMEAPURACAO",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "24/07/2023"
-  },
-
-  // Integra-DCTFWeb - DCTFWEB
-  "dctfweb-gerar-guia": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "DCTFWEB",
-    idServico: "GERARGUIA31",
-    description: "Gerar Guia Declaração",
-    requiredParams: ["periodoApuracao"],
-    category: "Integra-DCTFWeb",
-    subcategory: "DCTFWEB",
-    outputType: "pdf",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-  "dctfweb-consultar-recibo": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "DCTFWEB",
-    idServico: "CONSRECIBO32",
-    description: "Consultar o Recibo da Declaração",
-    requiredParams: ["numeroRecibo"],
-    category: "Integra-DCTFWeb",
-    subcategory: "DCTFWEB",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-  "dctfweb-consultar-declaracao-completa": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "DCTFWEB",
-    idServico: "CONSDECCOMPLETA33",
-    description: "Consultar Declaração Completa",
-    requiredParams: ["numeroDeclaracao"],
-    category: "Integra-DCTFWeb",
-    subcategory: "DCTFWEB",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-
-  // Integra-Sicalc - SICALC
-  "sicalc-gerar-darf": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "SICALC",
-    idServico: "CONSOLIDARGERARDARF51",
-    description: "Consolidar e Emitir um DARF em documento PDF",
-    requiredParams: ["codigoReceita", "periodoApuracao"],
-    category: "Integra-Sicalc",
-    subcategory: "SICALC",
-    outputType: "pdf",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-  "sicalc-consultar-receitas": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "SICALC",
-    idServico: "CONSULTAAPOIORECEITAS52",
-    description: "Apoio de consulta Receitas do Sicalc",
-    requiredParams: [],
-    category: "Integra-Sicalc",
-    subcategory: "SICALC",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-
-  // Integra-CaixaPostal - CAIXAPOSTAL
-  "caixapostal-consultar-mensagens": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "CAIXAPOSTAL",
-    idServico: "MSGCONTRIBUINTE61",
-    description: "Consulta de Mensagens por Contribuinte",
-    requiredParams: [],
-    category: "Integra-CaixaPostal",
-    subcategory: "CAIXAPOSTAL",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-
-  // Integra-Pagamento - PAGTOWEB
-  "pagamento-consultar": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "PAGTOWEB",
-    idServico: "PAGAMENTOS71",
-    description: "Consulta Pagamentos",
-    requiredParams: [],
-    category: "Integra-Pagamento",
-    subcategory: "PAGTOWEB",
-    outputType: "json",
-    enabled: false,
-    dateImplemented: "23/09/2022"
-  },
-
-  // Integra-SITFIS - SITFIS
-  "sitfis-solicitar-protocolo": {
-    endpoint: "/integra-contador/v1/Emitir",
+  "sitfis-consultar-situacao": {
+    endpoint: "/integra-contador/v1/Consultar",
+    apiType: "Consultar",
     idSistema: "SITFIS",
-    idServico: "SOLICITARPROTOCOLO91",
-    description: "Solicitação de geração de protocolo para baixar o relatório de Situação Fiscal",
+    idServico: "SITUACAOFISCAL29",
+    description: "Consultar Situação Fiscal",
     requiredParams: [],
     category: "Integra-SITFIS",
     subcategory: "SITFIS",
     outputType: "json",
     enabled: false,
-    dateImplemented: "01/09/2023"
-  },
-  "sitfis-relatorio": {
-    endpoint: "/integra-contador/v1/Emitir",
-    idSistema: "SITFIS",
-    idServico: "RELATORIOSITFIS92",
-    description: "Emissão de Relatório de Situação Fiscal",
-    requiredParams: ["protocoloSolicitacao"],
-    category: "Integra-SITFIS",
-    subcategory: "SITFIS",
-    outputType: "pdf",
-    enabled: false,
-    dateImplemented: "01/09/2023"
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
   },
 
-  // Legacy compatibility
-  "mei": {
+  // ===== DECLARAR SERVICES =====
+  "dctfweb-transmitir": {
+    endpoint: "/integra-contador/v1/Declarar",
+    apiType: "Declarar",
+    idSistema: "DCTFWEB",
+    idServico: "TRANSMITIR30",
+    description: "Transmitir DCTFWeb",
+    requiredParams: ["competencia", "arquivo"],
+    category: "Integra-DCTFWeb",
+    subcategory: "DCTFWEB",
+    outputType: "json",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "sn-transmitir-dasn": {
+    endpoint: "/integra-contador/v1/Declarar",
+    apiType: "Declarar",
+    idSistema: "SN",
+    idServico: "TRANSMITIRVDASN31",
+    description: "Transmitir DASN Simples Nacional",
+    requiredParams: ["exercicio", "arquivo"],
+    category: "Integra-SN",
+    subcategory: "SN",
+    outputType: "json",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+
+  // ===== EMITIR SERVICES =====
+  "mei-gerar-das-pdf": {
     endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
     idSistema: "PGMEI",
     idServico: "GERARDASPDF21",
-    description: "Gerar DAS MEI (compatibilidade)",
+    description: "Gerar DAS MEI em PDF",
     requiredParams: ["periodoApuracao"],
     category: "Integra-MEI",
     subcategory: "PGMEI",
     outputType: "pdf",
     enabled: true,
-    dateImplemented: "23/09/2022"
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "mei-gerar-das-codbarra": {
+    endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
+    idSistema: "PGMEI", 
+    idServico: "GERARDASCODBARRA22",
+    description: "Gerar DAS MEI em código de barras",
+    requiredParams: ["periodoApuracao"],
+    category: "Integra-MEI",
+    subcategory: "PGMEI",
+    outputType: "json",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "mei-atualizar-beneficio": {
+    endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
+    idSistema: "PGMEI",
+    idServico: "ATUBENEFICIO23",
+    description: "Atualizar Benefício MEI",
+    requiredParams: ["tipoBeneficio", "valor"],
+    category: "Integra-MEI",
+    subcategory: "PGMEI",
+    outputType: "json",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "ccmei-emitir": {
+    endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
+    idSistema: "CCMEI",
+    idServico: "EMITIRCCMEI121",
+    description: "Emissão do Certificado de Condição de MEI em formato PDF",
+    requiredParams: [],
+    category: "Integra-MEI",
+    subcategory: "CCMEI",
+    outputType: "pdf",
+    enabled: false,
+    dateImplemented: "01/10/2024",
+    versaoSistema: "1.0"
+  },
+  "sn-gerar-das": {
+    endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
+    idSistema: "SN",
+    idServico: "GERARDASSN32",
+    description: "Gerar DAS Simples Nacional",
+    requiredParams: ["competencia"],
+    category: "Integra-SN",
+    subcategory: "SN",
+    outputType: "pdf",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "sn-gerar-dasn": {
+    endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
+    idSistema: "SN",
+    idServico: "GERARDASN33",
+    description: "Gerar DASN Simples Nacional",
+    requiredParams: ["exercicio"],
+    category: "Integra-SN",
+    subcategory: "SN",
+    outputType: "pdf",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "dctfweb-gerar-guia": {
+    endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
+    idSistema: "DCTFWEB",
+    idServico: "GERARGUIA34",
+    description: "Gerar Guia DCTFWeb",
+    requiredParams: ["competencia", "codigoReceita"],
+    category: "Integra-DCTFWeb",
+    subcategory: "DCTFWEB",
+    outputType: "pdf",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "dctfweb-gerar-recibo": {
+    endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
+    idSistema: "DCTFWEB",
+    idServico: "GERARRECIBO35",
+    description: "Gerar Recibo DCTFWeb",
+    requiredParams: ["competencia", "numeroRecibo"],
+    category: "Integra-DCTFWeb",
+    subcategory: "DCTFWEB",
+    outputType: "pdf",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "sicalc-gerar-darf": {
+    endpoint: "/integra-contador/v1/Emitir",
+    apiType: "Emitir",
+    idSistema: "SICALC",
+    idServico: "GERARDARF36",
+    description: "Gerar DARF Sicalc",
+    requiredParams: ["codigoReceita", "competencia", "valor"],
+    category: "Integra-Sicalc",
+    subcategory: "SICALC",
+    outputType: "pdf",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+
+  // ===== MONITORAR SERVICES =====
+  "caixapostal-listar-mensagens": {
+    endpoint: "/integra-contador/v1/Monitorar",
+    apiType: "Monitorar",
+    idSistema: "CAIXAPOSTAL",
+    idServico: "LISTARMENSAGENS37",
+    description: "Listar Mensagens Caixa Postal",
+    requiredParams: [],
+    optionalParams: ["dataInicio", "dataFim"],
+    category: "Integra-CaixaPostal",
+    subcategory: "CAIXAPOSTAL",
+    outputType: "json",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "caixapostal-marcar-lida": {
+    endpoint: "/integra-contador/v1/Monitorar",
+    apiType: "Monitorar",
+    idSistema: "CAIXAPOSTAL",
+    idServico: "MARCARLIDA38",
+    description: "Marcar Mensagem Como Lida",
+    requiredParams: ["idMensagem"],
+    category: "Integra-CaixaPostal",
+    subcategory: "CAIXAPOSTAL",
+    outputType: "json",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "pagamento-consultar-comprovante": {
+    endpoint: "/integra-contador/v1/Monitorar",
+    apiType: "Monitorar",
+    idSistema: "PAGAMENTO",
+    idServico: "COMPROVANTE39",
+    description: "Consultar Comprovante de Pagamento",
+    requiredParams: ["numeroDocumento"],
+    category: "Integra-Pagamento",
+    subcategory: "PAGAMENTO",
+    outputType: "pdf",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
+  },
+  "pagamento-consultar-situacao": {
+    endpoint: "/integra-contador/v1/Monitorar",
+    apiType: "Monitorar",
+    idSistema: "PAGAMENTO",
+    idServico: "SITUACAOPAG40",
+    description: "Consultar Situação de Pagamento",
+    requiredParams: ["numeroDocumento"],
+    category: "Integra-Pagamento",
+    subcategory: "PAGAMENTO",
+    outputType: "json",
+    enabled: false,
+    dateImplemented: "23/09/2022",
+    versaoSistema: "1.0"
   }
 };
 
@@ -332,29 +360,45 @@ export function getServiceConfig(serviceName: string): SerproServiceConfig | nul
 export function getServicesByCategory(): Record<string, Record<string, (SerproServiceConfig & { serviceName: string })[]>> {
   const categories: Record<string, Record<string, (SerproServiceConfig & { serviceName: string })[]>> = {};
   
-  Object.entries(SERPRO_SERVICES).forEach(([key, service]) => {
-    // Skip legacy compatibility services in categorization
-    if (key === 'mei') return;
-    
-    if (!categories[service.category]) {
-      categories[service.category] = {};
+  Object.entries(SERPRO_SERVICES).forEach(([serviceName, config]) => {
+    if (!categories[config.category]) {
+      categories[config.category] = {};
     }
-    if (!categories[service.category][service.subcategory]) {
-      categories[service.category][service.subcategory] = [];
+    if (!categories[config.category][config.subcategory]) {
+      categories[config.category][config.subcategory] = [];
     }
-    categories[service.category][service.subcategory].push({
-      ...service,
-      serviceName: key
+    categories[config.category][config.subcategory].push({
+      ...config,
+      serviceName
     });
   });
   
   return categories;
 }
 
+export function getServicesByApiType(): Record<string, (SerproServiceConfig & { serviceName: string })[]> {
+  const apiTypes: Record<string, (SerproServiceConfig & { serviceName: string })[]> = {
+    Apoiar: [],
+    Consultar: [],
+    Declarar: [],
+    Emitir: [],
+    Monitorar: []
+  };
+  
+  Object.entries(SERPRO_SERVICES).forEach(([serviceName, config]) => {
+    apiTypes[config.apiType].push({
+      ...config,
+      serviceName
+    });
+  });
+  
+  return apiTypes;
+}
+
 export function getEnabledServices(): (SerproServiceConfig & { serviceName: string })[] {
   return Object.entries(SERPRO_SERVICES)
-    .filter(([_, service]) => service.enabled)
-    .map(([key, service]) => ({ ...service, serviceName: key }));
+    .filter(([_, config]) => config.enabled)
+    .map(([serviceName, config]) => ({ ...config, serviceName }));
 }
 
 export function enableService(serviceName: string): boolean {
@@ -374,43 +418,36 @@ export function disableService(serviceName: string): boolean {
 }
 
 export function buildServiceRequest(
-  serviceName: string, 
-  parameters: any,
+  serviceName: string,
+  parameters: Record<string, string>,
   contratante: string,
   autorPedidoDados: string,
   contribuinte: string
-) {
+): any {
   const config = getServiceConfig(serviceName);
   if (!config) {
-    throw new Error(`Serviço não encontrado: ${serviceName}`);
+    throw new Error(`Service ${serviceName} not found`);
   }
 
-  // Para serviços MEI, preparar os dados específicos
-  let dadosFormatados: any;
+  // Build the dados object with service-specific parameters
+  const dados: Record<string, any> = {};
   
-  if (config.idSistema === 'PGMEI') {
-    // Para MEI, usar apenas os parâmetros específicos do serviço
-    let periodo = parameters.periodoApuracao || parameters.competencia;
-    
-    // Converter formato "YYYY-MM" para "YYYYMM" se necessário
-    if (periodo && periodo.includes('-')) {
-      periodo = periodo.replace('-', '');
+  // Add required parameters
+  config.requiredParams.forEach(param => {
+    if (parameters[param] !== undefined) {
+      dados[param] = parameters[param];
     }
-    
-    dadosFormatados = {
-      periodoApuracao: periodo
-    };
-    
-    // Adicionar dataConsolidacao se fornecida
-    if (parameters.dataConsolidacao) {
-      dadosFormatados.dataConsolidacao = parameters.dataConsolidacao;
+  });
+  
+  // Add optional parameters if provided
+  config.optionalParams?.forEach(param => {
+    if (parameters[param] !== undefined) {
+      dados[param] = parameters[param];
     }
-  } else {
-    // Para outros serviços, usar todos os parâmetros
-    dadosFormatados = parameters;
-  }
+  });
 
-  return {
+  // Build the complete request structure
+  const request = {
     contratante: {
       numero: contratante,
       tipo: 2
@@ -426,7 +463,10 @@ export function buildServiceRequest(
     pedidoDados: {
       idSistema: config.idSistema,
       idServico: config.idServico,
-      dados: JSON.stringify(dadosFormatados)
+      versaoSistema: config.versaoSistema || "1.0",
+      dados: JSON.stringify(dados)
     }
   };
+
+  return request;
 }
