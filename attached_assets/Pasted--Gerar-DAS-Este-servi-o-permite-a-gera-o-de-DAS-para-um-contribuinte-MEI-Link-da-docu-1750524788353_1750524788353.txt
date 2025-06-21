@@ -1,0 +1,187 @@
+#   Gerar DAS
+#   Este serviço permite a geração de DAS para um contribuinte MEI.
+
+# Link da documentação:
+# https://apicenter.estaleiro.serpro.gov.br/documentacao/api-integra-contador/pt/sistemas/pgmei/servicos/gerar_das/
+
+# idSistema: PGMEI
+# idServico: GERARDASPDF21
+# versaoSistema: ""
+
+# Campo	- Descrição	- Tipo - Obrigatório
+# periodoApuracao	- Período de apuração no formato AAAAMM.	- Texto(17)	- SIM
+# dataConsolidacao	- Data de consolidação no formato AAAAMMDD.	- Texto(17)	- NÃO
+
+import requests
+import json
+import sys
+sys.path.append(r'C:\Users\Julio-IDVL\OneDrive\00. Julio\00. ESCRIBA UP\98. Integra Contador')
+import credenciais as credenciais
+import base64
+import re
+from PyPDF2 import PdfReader
+import pandas as pd
+from pathlib import Path
+import os
+from datetime import datetime
+
+# Suas credenciais
+access_token = credenciais.access_token
+jwt_token = credenciais.jwt_token
+AnoMes = "202503"
+contratante = "10781350000196"
+autorPedidoDados = "10781350000196"
+contribuinte = "49698869000140"
+
+def gerar_das(ano_mes, contratante, autorPedidoDados, contribuinte):
+    """
+    Gera um DAS para o MEI no período especificado
+    
+    Args:
+        ano_mes: Período de apuração no formato AAAAMM
+        contratante: CNPJ do contratante
+        autorPedidoDados: CNPJ do autor do pedido
+        contribuinte: CNPJ do contribuinte MEI
+    
+    Returns:
+        dict: Resultado da operação
+    """
+    # URL da API
+    url = "https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Emitir"
+
+    # Payload da requisição
+    payload = json.dumps({
+        "contratante": {"numero": contratante, "tipo": 2},
+        "autorPedidoDados": {"numero": autorPedidoDados, "tipo": 2},
+        "contribuinte": {"numero": contribuinte, "tipo": 2},
+        "pedidoDados": {
+            "idSistema": "PGMEI",
+            "idServico": "GERARDASPDF21",
+            "dados": json.dumps({"periodoApuracao": str(ano_mes)})
+        }
+    })
+
+    # Headers da requisição
+    headers = {
+        'accept': 'text/plain',
+        'Authorization': 'Bearer ' + access_token,
+        'Content-Type': 'application/json',
+        'jwt_token': jwt_token
+    }
+
+    # Fazendo a requisição
+    response = requests.post(url, headers=headers, data=payload)
+
+    print(f"Status da resposta: {response.status_code}")
+
+    try:
+        if response.status_code == 200:
+            response_data = response.json()
+            
+            # Salvando a resposta completa para análise
+            with open('response_das.json', 'w') as json_file:
+                json.dump(response_data, json_file, indent=4)
+                print("Arquivo response_das.json salvo para análise")
+
+            # Verificar se há mensagens de aviso ou erro
+            mensagens = response_data.get('mensagens', [])
+            for msg in mensagens:
+                print(f"Mensagem: [{msg.get('codigo')}] {msg.get('texto')}")
+                # Verificar se é um aviso específico sobre DAS já pago
+                if "23018" in msg.get('codigo', '') and "Já foi efetuado pagamento" in msg.get('texto', ''):
+                    return {
+                        'status': 'info',
+                        'mensagem': f"DAS para {ano_mes} já foi pago. Não é necessário gerar novo DAS.",
+                        'pdf_gerado': False
+                    }
+            
+            # Verificando formato dos dados recebidos
+            dados_str = response_data.get('dados', '[]')
+            
+            try:
+                dados_list = json.loads(dados_str)
+                
+                if isinstance(dados_list, list) and dados_list:  # Verifica se a lista não está vazia
+                    # Supondo que o primeiro elemento da lista contém os dados do PDF
+                    item = dados_list[0]
+                    
+                    base64_pdf_string = item.get('pdf', '')
+                    
+                    if base64_pdf_string:
+                        # Garantir que a pasta PGMEI existe
+                        pdf_dir = r'C:\Users\Julio-IDVL\OneDrive\00. Julio\00. ESCRIBA UP\98. Integra Contador\PGMEI'
+                        if not os.path.exists(pdf_dir):
+                            os.makedirs(pdf_dir)
+                        
+                        # Decodificar e salvar o PDF
+                        pdf_data = base64.b64decode(base64_pdf_string)
+                        pdf_file_path = os.path.join(pdf_dir, f"DAS-MEI_{contribuinte}_{ano_mes}.pdf")
+                        
+                        with open(pdf_file_path, 'wb') as pdf_file:
+                            pdf_file.write(pdf_data)
+                        print(f"PDF gerado com sucesso: {pdf_file_path}")
+                        
+                        return {
+                            'status': 'sucesso',
+                            'mensagem': f"DAS para {ano_mes} gerado com sucesso.",
+                            'pdf_path': pdf_file_path,
+                            'pdf_gerado': True
+                        }
+                    else:
+                        return {
+                            'status': 'aviso',
+                            'mensagem': "PDF não disponível na resposta da API. Verifique o arquivo response_das.json para mais detalhes.",
+                            'pdf_gerado': False
+                        }
+                else:
+                    return {
+                        'status': 'erro',
+                        'mensagem': "Dados inválidos recebidos da API.",
+                        'pdf_gerado': False
+                    }
+            except json.JSONDecodeError as e:
+                return {
+                    'status': 'erro',
+                    'mensagem': f"Erro ao decodificar JSON: {e}",
+                    'pdf_gerado': False
+                }
+        else:
+            return {
+                'status': 'erro',
+                'mensagem': f"Erro na resposta da API: {response.status_code} - {response.text}",
+                'pdf_gerado': False
+            }
+
+    except Exception as e:
+        import traceback
+        traceback_str = traceback.format_exc()
+        return {
+            'status': 'erro',
+            'mensagem': f"Erro inesperado: {str(e)}",
+            'traceback': traceback_str,
+            'pdf_gerado': False
+        }
+
+# Executar a geração do DAS
+resultado = gerar_das(AnoMes, contratante, autorPedidoDados, contribuinte)
+
+# Exibir resultado
+print("\n" + "="*50)
+print(f"Resultado da operação: {resultado['status'].upper()}")
+print(f"Mensagem: {resultado['mensagem']}")
+
+if resultado['status'] == 'info':
+    print("\nO DAS para este período já foi pago, por isso não foi gerado um novo documento.")
+    print("Consulte o histórico de pagamentos para mais informações.")
+elif resultado['status'] == 'aviso':
+    print("\nO DAS não foi gerado. Possíveis motivos:")
+    print("1. O período solicitado não tem valores a pagar")
+    print("2. O DAS já foi pago")
+    print("3. Ainda não é possível gerar o DAS para este período")
+    print("\nConsulte o arquivo response_das.json para mais detalhes.")
+elif resultado['status'] == 'erro':
+    print("\nOcorreu um erro ao tentar gerar o DAS.")
+    print("Verifique os dados informados e tente novamente.")
+elif resultado['status'] == 'sucesso':
+    print(f"\nO PDF foi salvo em: {resultado.get('pdf_path')}")
+    print("Abra o arquivo para visualizar e imprimir o DAS.")

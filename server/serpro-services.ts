@@ -24,6 +24,20 @@ export const SERPRO_SERVICES: Record<string, SerproServiceConfig> = {
     description: 'Geração de DAS',
     requiredParams: ['competencia', 'cnpj']
   },
+  'gerar-das-mei': {
+    endpoint: '/integra-contador/v1/Emitir',
+    idSistema: 'PGMEI',
+    idServico: 'GERARDASPDF21',
+    description: 'Geração de DAS para MEI',
+    requiredParams: ['periodoApuracao']
+  },
+  'mei': {
+    endpoint: '/integra-contador/v1/Emitir',
+    idSistema: 'PGMEI',
+    idServico: 'GERARDASPDF21',
+    description: 'Geração de DAS para MEI',
+    requiredParams: ['periodoApuracao']
+  },
   'consultar-situacao': {
     endpoint: '/integra-contador/v1/ConsultarSituacao',
     idSistema: 'PGDASD',
@@ -49,6 +63,24 @@ export function buildServiceRequest(
     throw new Error(`Serviço não encontrado: ${serviceName}`);
   }
 
+  // Para serviços MEI, preparar os dados específicos
+  let dadosFormatados: any;
+  
+  if (config.idSistema === 'PGMEI') {
+    // Para MEI, usar apenas os parâmetros específicos do serviço
+    dadosFormatados = {
+      periodoApuracao: parameters.periodoApuracao || parameters.competencia
+    };
+    
+    // Adicionar dataConsolidacao se fornecida
+    if (parameters.dataConsolidacao) {
+      dadosFormatados.dataConsolidacao = parameters.dataConsolidacao;
+    }
+  } else {
+    // Para outros serviços, usar todos os parâmetros
+    dadosFormatados = parameters;
+  }
+
   return {
     contratante: {
       numero: contratante,
@@ -65,8 +97,7 @@ export function buildServiceRequest(
     pedidoDados: {
       idSistema: config.idSistema,
       idServico: config.idServico,
-      versaoSistema: "1.0",
-      dados: JSON.stringify(parameters)
+      dados: JSON.stringify(dadosFormatados)
     }
   };
 }

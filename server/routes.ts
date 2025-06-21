@@ -359,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const serviceConfig = getServiceConfig(serviceName);
       if (!serviceConfig) {
         return res.status(400).json({ 
-          message: `Serviço não suportado: ${serviceName}. Serviços disponíveis: consultar-das, gerar-das, consultar-situacao` 
+          message: `Serviço não suportado: ${serviceName}. Serviços disponíveis: consultar-das, gerar-das, gerar-das-mei, mei, consultar-situacao` 
         });
       }
 
@@ -370,6 +370,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         parameters.autorPedidoDados,
         parameters.contribuinte
       );
+
+      console.log('API Request Body:', JSON.stringify(apiRequestBody, null, 2));
+      console.log('Service Config:', serviceConfig);
 
       // Real API call to SERPRO Integra Contador
       const serviceHeaders = {
@@ -470,12 +473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.end();
         });
 
-        if (!serviceResponse.ok) {
-          const errorText = await serviceResponse.text();
-          throw new Error(`Service call failed: ${serviceResponse.status} - ${errorText}`);
-        }
-
-        const responseData = await serviceResponse.json();
+        const responseData = serviceResponse;
 
         // Update the request with the response
         await storage.saveServiceRequest({
