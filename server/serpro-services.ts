@@ -68,8 +68,15 @@ export function buildServiceRequest(
   
   if (config.idSistema === 'PGMEI') {
     // Para MEI, usar apenas os parâmetros específicos do serviço
+    let periodo = parameters.periodoApuracao || parameters.competencia;
+    
+    // Converter formato "YYYY-MM" para "YYYYMM" se necessário
+    if (periodo && periodo.includes('-')) {
+      periodo = periodo.replace('-', '');
+    }
+    
     dadosFormatados = {
-      periodoApuracao: parameters.periodoApuracao || parameters.competencia
+      periodoApuracao: periodo
     };
     
     // Adicionar dataConsolidacao se fornecida

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, FileText, Calendar, UserRoundCheck, TrendingUp, Mail, Receipt, Play, X, Eye, Download, Copy, CheckCircle } from "lucide-react";
+import { Settings, FileText, Calendar, UserRoundCheck, TrendingUp, Mail, Receipt, Play, X, Eye, Download, Copy, CheckCircle, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -352,42 +352,106 @@ export default function ServicesModule() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-foreground">Resposta da API</h3>
-                  <Badge className="bg-green-100 text-green-800">
-                    <CheckCircle className="mr-1" size={14} />
-                    Sucesso
+                  <Badge className={apiResponse.success === false || apiResponse.status === 400 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}>
+                    {apiResponse.success === false || apiResponse.status === 400 ? (
+                      <>
+                        <AlertCircle className="mr-1" size={14} />
+                        Erro de Validação
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="mr-1" size={14} />
+                        Sucesso
+                      </>
+                    )}
                   </Badge>
                 </div>
                 
                 {/* Response Content */}
                 <div className="space-y-4">
-                  <Card className="bg-muted/50">
-                    <CardContent className="p-4">
-                      <h4 className="text-sm font-medium text-foreground mb-2">Documento Gerado</h4>
-                      <div className="flex items-center justify-between p-3 bg-background border border-border rounded-md">
-                        <div className="flex items-center space-x-3">
-                          <FileText className="text-red-500 text-xl" />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              DAS_{selectedService}_{new Date().toISOString().slice(0, 7).replace('-', '')}.pdf
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              245 KB • Gerado em {new Date().toLocaleString('pt-BR')}
-                            </p>
+                  {/* Show PDF document only if there's actual PDF data */}
+                  {(apiResponse.pdf || apiResponse.documento) && apiResponse.success !== false && apiResponse.status !== 400 && (
+                    <Card className="bg-muted/50">
+                      <CardContent className="p-4">
+                        <h4 className="text-sm font-medium text-foreground mb-2">Documento Gerado</h4>
+                        <div className="flex items-center justify-between p-3 bg-background border border-border rounded-md">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="text-red-500 text-xl" />
+                            <div>
+                              <p className="text-sm font-medium text-foreground">
+                                DAS_{selectedService}_{serviceParameters.competencia?.replace('-', '') || new Date().toISOString().slice(0, 7).replace('-', '')}.pdf
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                PDF • Gerado em {new Date().toLocaleString('pt-BR')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" onClick={handleViewDocument}>
+                              <Eye className="mr-1" size={14} />
+                              Visualizar
+                            </Button>
+                            <Button size="sm" className="bg-primary hover:bg-primary-600" onClick={handleDownloadDocument}>
+                              <Download className="mr-1" size={14} />
+                              Baixar
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" onClick={handleViewDocument}>
-                            <Eye className="mr-1" size={14} />
-                            Visualizar
-                          </Button>
-                          <Button size="sm" className="bg-primary hover:bg-primary-600" onClick={handleDownloadDocument}>
-                            <Download className="mr-1" size={14} />
-                            Baixar
-                          </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Show SERPRO messages */}
+                  {apiResponse.mensagens && (
+                    <Card className={
+                      apiResponse.mensagens.some((msg: any) => msg.codigo?.includes('Erro') || msg.codigo?.includes('EntradaIncorreta')) 
+                        ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
+                        : apiResponse.mensagens.some((msg: any) => msg.codigo?.includes('Aviso') || msg.texto?.includes('Já foi efetuado pagamento'))
+                        ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
+                        : "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                    }>
+                      <CardContent className="p-4">
+                        <h4 className={`text-sm font-medium mb-2 ${
+                          apiResponse.mensagens.some((msg: any) => msg.codigo?.includes('Erro') || msg.codigo?.includes('EntradaIncorreta'))
+                            ? "text-red-800 dark:text-red-200"
+                            : apiResponse.mensagens.some((msg: any) => msg.codigo?.includes('Aviso') || msg.texto?.includes('Já foi efetuado pagamento'))
+                            ? "text-yellow-800 dark:text-yellow-200"
+                            : "text-green-800 dark:text-green-200"
+                        }`}>
+                          Mensagens do SERPRO
+                        </h4>
+                        <div className="space-y-2">
+                          {apiResponse.mensagens.map((msg: any, index: number) => {
+                            const isError = msg.codigo?.includes('Erro') || msg.codigo?.includes('EntradaIncorreta');
+                            const isWarning = msg.codigo?.includes('Aviso') || msg.texto?.includes('Já foi efetuado pagamento');
+                            const bgColor = isError ? "bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800" 
+                                          : isWarning ? "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800"
+                                          : "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800";
+                            const textColor = isError ? "text-red-800 dark:text-red-200" 
+                                            : isWarning ? "text-yellow-800 dark:text-yellow-200"
+                                            : "text-green-800 dark:text-green-200";
+                            const subTextColor = isError ? "text-red-700 dark:text-red-300" 
+                                                : isWarning ? "text-yellow-700 dark:text-yellow-300"
+                                                : "text-green-700 dark:text-green-300";
+                            
+                            return (
+                              <div key={index} className={`p-3 rounded border ${bgColor}`}>
+                                <p className={`text-sm font-medium ${textColor}`}>
+                                  {msg.codigo?.includes('Sucesso') ? 'Sucesso' 
+                                   : msg.codigo?.includes('Aviso') ? 'Aviso'
+                                   : msg.codigo?.includes('Erro') ? 'Erro'
+                                   : `Código: ${msg.codigo}`}
+                                </p>
+                                <p className={`text-sm mt-1 ${subTextColor}`}>
+                                  {msg.texto}
+                                </p>
+                              </div>
+                            );
+                          })}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Raw Response */}
                   <Card className="bg-muted/50">
