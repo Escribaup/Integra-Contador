@@ -12,6 +12,8 @@ import {
   type InsertAuthTokens,
   type InsertServiceRequest
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Credentials
@@ -141,4 +143,100 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
+  async getCredentials(): Promise<Credentials | undefined> {
+    const [credential] = await db.select().from(credentials).limit(1);
+    return credential || undefined;
+  }
+
+  async saveCredentials(creds: InsertCredentials): Promise<Credentials> {
+    // Delete existing credentials (only keep one set)
+    await db.delete(credentials);
+    
+    const [saved] = await db
+      .insert(credentials)
+      .values(creds)
+      .returning();
+    return saved;
+  }
+
+  async getCertificate(): Promise<Certificate | undefined> {
+    const [certificate] = await db.select().from(certificates).limit(1);
+    return certificate || undefined;
+  }
+
+  async saveCertificate(cert: InsertCertificate): Promise<Certificate> {
+    // Delete existing certificates (only keep one)
+    await db.delete(certificates);
+    
+    const [saved] = await db
+      .insert(certificates)
+      .values(cert)
+      .returning();
+    return saved;
+  }
+
+  async updateCertificate(id: number, updates: Partial<Certificate>): Promise<Certificate> {
+    const [updated] = await db
+      .update(certificates)
+      .set(updates)
+      .where(eq(certificates.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error("Certificate not found");
+    }
+    return updated;
+  }
+
+  async getValidAuthTokens(): Promise<AuthTokens | undefined> {
+    const [tokens] = await db
+      .select()
+      .from(authTokens)
+      .orderBy(desc(authTokens.createdAt))
+      .limit(1);
+    
+    if (!tokens || new Date(tokens.expiresAt) <= new Date()) {
+      return undefined;
+    }
+    return tokens;
+  }
+
+  async saveAuthTokens(tokens: InsertAuthTokens): Promise<AuthTokens> {
+    // Delete existing tokens (only keep latest)
+    await db.delete(authTokens);
+    
+    const [saved] = await db
+      .insert(authTokens)
+      .values(tokens)
+      .returning();
+    return saved;
+  }
+
+  async saveServiceRequest(request: InsertServiceRequest): Promise<ServiceRequest> {
+    const [saved] = await db
+      .insert(serviceRequests)
+      .values(request)
+      .returning();
+    return saved;
+  }
+
+  async getServiceRequests(): Promise<ServiceRequest[]> {
+    return await db
+      .select()
+      .from(serviceRequests)
+      .orderBy(desc(serviceRequests.createdAt));
+  }
+
+  async getServiceRequest(id: number): Promise<ServiceRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(serviceRequests)
+      .where(eq(serviceRequests.id, id))
+      .limit(1);
+    return request || undefined;
+  }
+}
+
+export const storage = new DatabaseStorage();

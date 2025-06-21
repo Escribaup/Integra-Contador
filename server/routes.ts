@@ -93,8 +93,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Get the certificate
-          const certBag = certBags[forge.pki.oids.certBag][0];
-          const certificate = certBag.cert;
+          const certBag = certBags[forge.pki.oids.certBag]?.[0];
+          const certificate = certBag?.cert;
           
           if (!certificate) {
             throw new Error("Não foi possível extrair o certificado");
@@ -106,12 +106,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Look for CNPJ in subject or extensions
           const subject = certificate.subject;
-          const subjectAltName = certificate.getExtension('subjectAltName');
           
           // Extract company name from subject CN (Common Name)
           for (const attr of subject.attributes) {
             if (attr.name === 'commonName') {
-              companyName = attr.value;
+              companyName = typeof attr.value === 'string' ? attr.value : '';
               break;
             }
           }
@@ -120,11 +119,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const attr of subject.attributes) {
             if (attr.name === 'serialNumber' || attr.shortName === 'serialNumber') {
               const serial = attr.value;
-              // CNPJ pattern: 14 digits
-              const cnpjMatch = serial.match(/\d{14}/);
-              if (cnpjMatch) {
-                cnpj = cnpjMatch[0];
-                break;
+              if (typeof serial === 'string') {
+                // CNPJ pattern: 14 digits
+                const cnpjMatch = serial.match(/\d{14}/);
+                if (cnpjMatch) {
+                  cnpj = cnpjMatch[0];
+                  break;
+                }
               }
             }
           }
@@ -133,8 +134,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const expirationDate = certificate.validity.notAfter;
           
           // Convert private key to PEM format
-          const keyBag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag][0];
-          const privateKey = keyBag.key;
+          const keyBag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag]?.[0];
+          const privateKey = keyBag?.key;
+          
+          if (!privateKey) {
+            throw new Error("Não foi possível extrair a chave privada do certificado");
+          }
+          
           const privateKeyPem = forge.pki.privateKeyToPem(privateKey);
           
           // Convert certificate to PEM format
